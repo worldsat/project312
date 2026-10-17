@@ -130,9 +130,6 @@ fun AutomationsRoutinesScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        // Decorative Ambient Light Backdrops
-        RoutinesAmbientBackdrops()
-
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
@@ -229,44 +226,6 @@ fun AutomationsRoutinesScreen(
     }
 }
 
-/**
- * Ambient colored glow accents behind the routines cockpit.
- */
-@Composable
-private fun BoxScope.RoutinesAmbientBackdrops() {
-    Box(
-        modifier = Modifier
-            .align(Alignment.TopEnd)
-            .offset(x = 40.dp, y = (-20).dp)
-            .size(260.dp)
-            .background(
-                brush = Brush.radialGradient(
-                    colors = listOf(
-                        ElectricCyan.copy(alpha = 0.18f),
-                        ElectricCyan.copy(alpha = 0.04f),
-                        Color.Transparent
-                    )
-                ),
-                shape = CircleShape
-            )
-    )
-    Box(
-        modifier = Modifier
-            .align(Alignment.TopStart)
-            .offset(x = (-40).dp, y = 300.dp)
-            .size(280.dp)
-            .background(
-                brush = Brush.radialGradient(
-                    colors = listOf(
-                        VioletContainerVibrant.copy(alpha = 0.20f),
-                        VioletContainerVibrant.copy(alpha = 0.05f),
-                        Color.Transparent
-                    )
-                ),
-                shape = CircleShape
-            )
-    )
-}
 
 /**
  * 1. AI Protocol Synapse Banner Card.

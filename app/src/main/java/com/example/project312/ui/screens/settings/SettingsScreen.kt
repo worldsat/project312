@@ -120,12 +120,6 @@ fun SettingsScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        // 1. Ambient Glow Backdrops
-        if (state.display.ambientBackdropGlows) {
-            SettingsAmbientBackdrops(accentColor = activeAccentColor)
-        }
-
-        // 2. Main Scrollable List
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
@@ -288,45 +282,6 @@ fun SettingsScreen(
     }
 }
 
-/**
- * Ambient colored glow accents behind the settings screen.
- * Matches Flutter positioned glows (Top-Start -30,-20 and Top-End -40,300).
- */
-@Composable
-private fun BoxScope.SettingsAmbientBackdrops(accentColor: Color) {
-    Box(
-        modifier = Modifier
-            .align(Alignment.TopStart)
-            .offset(x = (-30).dp, y = (-20).dp)
-            .size(240.dp)
-            .background(
-                brush = Brush.radialGradient(
-                    colors = listOf(
-                        accentColor.copy(alpha = 0.18f),
-                        accentColor.copy(alpha = 0.04f),
-                        Color.Transparent
-                    )
-                ),
-                shape = CircleShape
-            )
-    )
-    Box(
-        modifier = Modifier
-            .align(Alignment.TopEnd)
-            .offset(x = 40.dp, y = 300.dp)
-            .size(260.dp)
-            .background(
-                brush = Brush.radialGradient(
-                    colors = listOf(
-                        VioletContainerVibrant.copy(alpha = 0.20f),
-                        VioletContainerVibrant.copy(alpha = 0.05f),
-                        Color.Transparent
-                    )
-                ),
-                shape = CircleShape
-            )
-    )
-}
 
 /**
  * Settings Header.
@@ -879,17 +834,6 @@ private fun InterfaceCard(
                 checked = state.display.tacticalHaptics,
                 accent = QuickActionAccent.PURPLE,
                 onCheckedChange = { onAction(SettingsUiAction.ToggleTacticalHaptics(it)) }
-            )
-
-            SettingsDivider()
-
-            SettingSwitchRow(
-                icon = Icons.Rounded.WbSunny,
-                title = "Ambient Neon Flare Glows",
-                subtitle = "Atmospheric cyan and violet radial glow layers",
-                checked = state.display.ambientBackdropGlows,
-                accent = QuickActionAccent.EMERALD,
-                onCheckedChange = { onAction(SettingsUiAction.ToggleAmbientBackdrops(it)) }
             )
 
             SettingsDivider()

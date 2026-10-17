@@ -121,9 +121,6 @@ fun RoomsZonesScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        // Decorative Ambient Light Backdrops
-        RoomsAmbientBackdrops()
-
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
@@ -232,44 +229,6 @@ fun RoomsZonesScreen(
     }
 }
 
-/**
- * Ambient colored glow accents behind the rooms cockpit.
- */
-@Composable
-private fun BoxScope.RoomsAmbientBackdrops() {
-    Box(
-        modifier = Modifier
-            .align(Alignment.TopStart)
-            .offset(x = (-40).dp, y = (-20).dp)
-            .size(260.dp)
-            .background(
-                brush = Brush.radialGradient(
-                    colors = listOf(
-                        ElectricCyan.copy(alpha = 0.20f),
-                        ElectricCyan.copy(alpha = 0.05f),
-                        Color.Transparent
-                    )
-                ),
-                shape = CircleShape
-            )
-    )
-    Box(
-        modifier = Modifier
-            .align(Alignment.TopEnd)
-            .offset(x = 50.dp, y = 320.dp)
-            .size(280.dp)
-            .background(
-                brush = Brush.radialGradient(
-                    colors = listOf(
-                        VioletContainerVibrant.copy(alpha = 0.22f),
-                        VioletContainerVibrant.copy(alpha = 0.05f),
-                        Color.Transparent
-                    )
-                ),
-                shape = CircleShape
-            )
-    )
-}
 
 /**
  * Active Habitats Header.

@@ -120,9 +120,6 @@ fun EnergyAnalyticsScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        // Decorative Ambient Light Backdrops
-        EnergyAmbientBackdrops()
-
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
@@ -230,60 +227,6 @@ fun EnergyAnalyticsScreen(
     }
 }
 
-/**
- * Ambient Light Backdrops for authentic cyber glassmorphism depth.
- */
-@Composable
-private fun BoxScope.EnergyAmbientBackdrops() {
-    Box(
-        modifier = Modifier
-            .align(Alignment.TopStart)
-            .offset(x = (-40).dp, y = (-20).dp)
-            .size(260.dp)
-            .background(
-                brush = Brush.radialGradient(
-                    colors = listOf(
-                        ElectricCyan.copy(alpha = 0.20f),
-                        ElectricCyan.copy(alpha = 0.05f),
-                        Color.Transparent
-                    )
-                ),
-                shape = CircleShape
-            )
-    )
-    Box(
-        modifier = Modifier
-            .align(Alignment.TopEnd)
-            .offset(x = 40.dp, y = 140.dp)
-            .size(280.dp)
-            .background(
-                brush = Brush.radialGradient(
-                    colors = listOf(
-                        EcoEmeraldBright.copy(alpha = 0.18f),
-                        EcoEmeraldBright.copy(alpha = 0.04f),
-                        Color.Transparent
-                    )
-                ),
-                shape = CircleShape
-            )
-    )
-    Box(
-        modifier = Modifier
-            .align(Alignment.TopStart)
-            .offset(x = 40.dp, y = 520.dp)
-            .size(300.dp)
-            .background(
-                brush = Brush.radialGradient(
-                    colors = listOf(
-                        VioletContainerVibrant.copy(alpha = 0.22f),
-                        VioletContainerVibrant.copy(alpha = 0.06f),
-                        Color.Transparent
-                    )
-                ),
-                shape = CircleShape
-            )
-    )
-}
 
 /**
  * Top title block: Energy Matrix & Grid Sync micro status.

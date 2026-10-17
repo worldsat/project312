@@ -122,9 +122,6 @@ fun OverviewScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        // Ambient Background Glow Orbs
-        AmbientBackgroundGlows()
-
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
@@ -194,48 +191,6 @@ fun OverviewScreen(
     }
 }
 
-/**
- * Ambient colored glow accents behind the glassmorphic cockpit.
- * Uses rich radial gradients for authentic cyber glassmorphism across all Android versions.
- */
-@Composable
-private fun BoxScope.AmbientBackgroundGlows() {
-    // Top-left Electric Cyan ambient glow orb
-    Box(
-        modifier = Modifier
-            .align(Alignment.TopStart)
-            .offset(x = (-50).dp, y = (-30).dp)
-            .size(280.dp)
-            .background(
-                brush = Brush.radialGradient(
-                    colors = listOf(
-                        ElectricCyan.copy(alpha = 0.22f),
-                        ElectricCyan.copy(alpha = 0.08f),
-                        Color.Transparent
-                    )
-                ),
-                shape = CircleShape
-            )
-    )
-
-    // Mid-right Violet Aurora ambient glow orb
-    Box(
-        modifier = Modifier
-            .align(Alignment.TopEnd)
-            .offset(x = 60.dp, y = 260.dp)
-            .size(300.dp)
-            .background(
-                brush = Brush.radialGradient(
-                    colors = listOf(
-                        VioletContainerVibrant.copy(alpha = 0.24f),
-                        VioletContainerVibrant.copy(alpha = 0.07f),
-                        Color.Transparent
-                    )
-                ),
-                shape = CircleShape
-            )
-    )
-}
 
 /**
  * Hero Telemetry Card for Sector Alpha.
