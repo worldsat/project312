@@ -69,6 +69,7 @@ fun NexusHabitatApp(
                 habitatName = overviewState.telemetry.habitatName,
                 statusText = overviewState.telemetry.overallStatus,
                 temperatureText = "${overviewState.telemetry.overallTemp.toInt()}°C",
+                powerDemandText = "${overviewState.telemetry.powerDemandKw} kW",
                 hasUnreadNotification = overviewState.hasUnreadNotifications,
                 onNotificationClick = {
                     overviewViewModel.onAction(OverviewUiAction.ToggleNotifications)

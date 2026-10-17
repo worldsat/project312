@@ -22,9 +22,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.rounded.Bolt
+import androidx.compose.material.icons.rounded.Hub
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Thermostat
 import androidx.compose.material3.Icon
@@ -48,6 +50,7 @@ import com.example.project312.ui.theme.ElectricCyanFixedDim
 import com.example.project312.ui.theme.OnBackgroundSlate50
 import com.example.project312.ui.theme.OnSurfaceVariantSlate
 import com.example.project312.ui.theme.OutlineGlass
+import com.example.project312.ui.theme.SurfaceContainer
 import com.example.project312.ui.theme.SurfaceContainerHigh
 import com.example.project312.ui.theme.SurfaceObsidian
 
@@ -56,6 +59,7 @@ fun NexusTopAppBar(
     habitatName: String = "Nexus Habitat",
     statusText: String = "Optimal",
     temperatureText: String = "24°C",
+    powerDemandText: String = "1.2 kW",
     hasUnreadNotification: Boolean = true,
     onNotificationClick: () -> Unit = {},
     onAvatarClick: () -> Unit = {},
@@ -105,7 +109,7 @@ fun NexusTopAppBar(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Filled.Home,
+                        imageVector = Icons.Rounded.Hub,
                         contentDescription = "Nexus Habitat Brand",
                         tint = ElectricCyan,
                         modifier = Modifier.size(22.dp)
@@ -166,11 +170,36 @@ fun NexusTopAppBar(
                 }
             }
 
-            // Right: Actions (Notification bell + User Avatar)
+            // Right: Power Chip + Actions (Notification bell + User Avatar)
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
+                // Power Demand Pill
+                Row(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(999.dp))
+                        .background(SurfaceContainer.copy(alpha = 0.70f))
+                        .border(1.dp, OutlineGlass.copy(alpha = 0.15f), RoundedCornerShape(999.dp))
+                        .padding(horizontal = 10.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Bolt,
+                        contentDescription = "Power Demand",
+                        tint = EcoEmeraldBright,
+                        modifier = Modifier.size(15.dp)
+                    )
+                    Text(
+                        text = powerDemandText,
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            color = OnBackgroundSlate50,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    )
+                }
+
                 // Notification Button with glowing unread dot
                 Box(
                     modifier = Modifier

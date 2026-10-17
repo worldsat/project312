@@ -1,6 +1,7 @@
 package com.example.project312.ui.screens.overview
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -9,12 +10,15 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -51,14 +55,12 @@ import androidx.compose.material.icons.rounded.Thermostat
 import androidx.compose.material.icons.rounded.Verified
 import androidx.compose.material.icons.rounded.WaterDrop
 import androidx.compose.material.icons.rounded.WbTwilight
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Snackbar
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.ripple
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -173,24 +175,20 @@ fun OverviewScreen(
             }
         }
 
-        // Local feedback toast / banner if active
-        state.feedbackMessage?.let { message ->
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 16.dp, start = 20.dp, end = 20.dp)
-            ) {
-                Snackbar(
-                    action = {
-                        TextButton(onClick = { onAction(OverviewUiAction.ClearFeedback) }) {
-                            Text("OK", color = ElectricCyan)
-                        }
-                    },
-                    containerColor = SurfaceContainerHighest,
-                    contentColor = OnBackgroundSlate50
-                ) {
-                    Text(text = message, style = MaterialTheme.typography.bodyMedium)
-                }
+        // Floating In-Place Feedback Banner matching Flutter
+        AnimatedVisibility(
+            visible = state.feedbackMessage != null,
+            enter = fadeIn(animationSpec = tween(200)) + slideInVertically(animationSpec = tween(250)) { it / 2 },
+            exit = fadeOut(animationSpec = tween(150)) + slideOutVertically(animationSpec = tween(200)) { it / 2 },
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 16.dp, start = 20.dp, end = 20.dp)
+        ) {
+            state.feedbackMessage?.let { message ->
+                FeedbackToast(
+                    message = message,
+                    onDismiss = { onAction(OverviewUiAction.ClearFeedback) }
+                )
             }
         }
     }
@@ -201,10 +199,11 @@ fun OverviewScreen(
  * Uses rich radial gradients for authentic cyber glassmorphism across all Android versions.
  */
 @Composable
-private fun AmbientBackgroundGlows() {
+private fun BoxScope.AmbientBackgroundGlows() {
     // Top-left Electric Cyan ambient glow orb
     Box(
         modifier = Modifier
+            .align(Alignment.TopStart)
             .offset(x = (-50).dp, y = (-30).dp)
             .size(280.dp)
             .background(
@@ -222,7 +221,8 @@ private fun AmbientBackgroundGlows() {
     // Mid-right Violet Aurora ambient glow orb
     Box(
         modifier = Modifier
-            .offset(x = 160.dp, y = 280.dp)
+            .align(Alignment.TopEnd)
+            .offset(x = 60.dp, y = 260.dp)
             .size(300.dp)
             .background(
                 brush = Brush.radialGradient(
@@ -264,7 +264,7 @@ private fun TelemetryHeroCard(
         Box(
             modifier = Modifier
                 .align(Alignment.TopEnd)
-                .offset(x = 30.dp, y = (-20).dp)
+                .offset(x = 20.dp, y = (-20).dp)
                 .size(160.dp)
                 .background(
                     brush = Brush.radialGradient(
@@ -288,7 +288,7 @@ private fun TelemetryHeroCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.Top
             ) {
-                Column {
+                Column(modifier = Modifier.weight(1f, fill = false)) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -306,7 +306,9 @@ private fun TelemetryHeroCard(
                                 fontWeight = FontWeight.Bold,
                                 letterSpacing = 1.sp,
                                 color = ElectricCyanFixedDim
-                            )
+                            ),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
                     Spacer(modifier = Modifier.height(3.dp))
@@ -315,7 +317,9 @@ private fun TelemetryHeroCard(
                         style = MaterialTheme.typography.headlineMedium.copy(
                             fontWeight = FontWeight.Bold,
                             color = OnBackgroundSlate50
-                        )
+                        ),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
 
@@ -390,6 +394,7 @@ private fun TelemetryHeroCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(
+                    modifier = Modifier.weight(1f, fill = false),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
@@ -403,7 +408,9 @@ private fun TelemetryHeroCard(
                         text = "Biometric air scrubbers running",
                         style = MaterialTheme.typography.labelSmall.copy(
                             color = OnSurfaceVariantSlate
-                        )
+                        ),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
 
@@ -438,8 +445,7 @@ private fun MetricTile(
         contentAlignment = Alignment.Center
     ) {
         Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Box(
                 modifier = Modifier
@@ -456,12 +462,16 @@ private fun MetricTile(
                 )
             }
 
+            Spacer(modifier = Modifier.height(4.dp))
+
             Text(
                 text = value,
                 style = MaterialTheme.typography.titleMedium.copy(
                     fontWeight = FontWeight.Bold,
                     color = valueColor
-                )
+                ),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
 
             Text(
@@ -469,7 +479,9 @@ private fun MetricTile(
                 style = MaterialTheme.typography.labelSmall.copy(
                     fontSize = 11.sp,
                     color = OnSurfaceVariantSlate
-                )
+                ),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
     }
@@ -506,7 +518,9 @@ private fun SystemModesSection(
                 style = MaterialTheme.typography.titleMedium.copy(
                     fontWeight = FontWeight.SemiBold,
                     color = OnBackgroundSlate50
-                )
+                ),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
             Text(
                 text = "Dynamic Shift",
@@ -530,17 +544,31 @@ private fun SystemModesSection(
                     SystemMode.PARTY_AURA -> Icons.Rounded.AutoAwesome
                 }
 
+                val chipBgColor by animateColorAsState(
+                    targetValue = if (isActive) ElectricCyan.copy(alpha = 0.22f)
+                    else SurfaceContainerHigh.copy(alpha = 0.65f),
+                    animationSpec = tween(durationMillis = 200),
+                    label = "chipBgColor"
+                )
+                val chipBorderColor by animateColorAsState(
+                    targetValue = if (isActive) ElectricCyan.copy(alpha = 0.60f)
+                    else OutlineGlass.copy(alpha = 0.10f),
+                    animationSpec = tween(durationMillis = 200),
+                    label = "chipBorderColor"
+                )
+                val chipTextColor by animateColorAsState(
+                    targetValue = if (isActive) ElectricCyan else OnSurfaceVariantSlate,
+                    animationSpec = tween(durationMillis = 200),
+                    label = "chipTextColor"
+                )
+
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(999.dp))
-                        .background(
-                            if (isActive) ElectricCyan.copy(alpha = 0.22f)
-                            else SurfaceContainerHigh.copy(alpha = 0.65f)
-                        )
+                        .background(chipBgColor)
                         .border(
                             width = 1.dp,
-                            color = if (isActive) ElectricCyan.copy(alpha = 0.60f)
-                            else OutlineGlass.copy(alpha = 0.10f),
+                            color = chipBorderColor,
                             shape = RoundedCornerShape(999.dp)
                         )
                         .clickable(
@@ -575,7 +603,7 @@ private fun SystemModesSection(
                             text = mode.label,
                             style = MaterialTheme.typography.labelLarge.copy(
                                 fontWeight = if (isActive) FontWeight.Bold else FontWeight.Medium,
-                                color = if (isActive) ElectricCyan else OnSurfaceVariantSlate
+                                color = chipTextColor
                             )
                         )
                     }
@@ -608,7 +636,9 @@ private fun InstantActionsSection(
                 style = MaterialTheme.typography.titleMedium.copy(
                     fontWeight = FontWeight.SemiBold,
                     color = OnBackgroundSlate50
-                )
+                ),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
             Text(
                 text = "One-Tap Execute",
@@ -728,7 +758,9 @@ private fun InstantActionCard(
                         fontSize = 15.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = OnBackgroundSlate50
-                    )
+                    ),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
@@ -736,7 +768,9 @@ private fun InstantActionCard(
                     style = MaterialTheme.typography.labelSmall.copy(
                         color = subtitleColor,
                         fontWeight = FontWeight.Medium
-                    )
+                    ),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
         }
@@ -756,8 +790,7 @@ private fun EnergyVectorSection(
         paddingValues = PaddingValues(16.dp)
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            modifier = Modifier.fillMaxWidth()
         ) {
             // Header Row: Bolt badge + titles + right consumption readout
             Row(
@@ -766,6 +799,7 @@ private fun EnergyVectorSection(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(
+                    modifier = Modifier.weight(1f, fill = false),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
@@ -789,16 +823,22 @@ private fun EnergyVectorSection(
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.SemiBold,
                                 color = OnBackgroundSlate50
-                            )
+                            ),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                         Text(
                             text = "Real-time Telemetry",
                             style = MaterialTheme.typography.labelSmall.copy(
                                 color = OnSurfaceVariantSlate
-                            )
+                            ),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
                 }
+
+                Spacer(modifier = Modifier.width(8.dp))
 
                 Column(
                     horizontalAlignment = Alignment.End
@@ -844,18 +884,18 @@ private fun EnergyVectorSection(
                 }
             }
 
+            Spacer(modifier = Modifier.height(8.dp))
+
             // Custom Canvas Spline Curve
             EnergyVectorGraph(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 4.dp)
+                modifier = Modifier.fillMaxWidth()
             )
+
+            Spacer(modifier = Modifier.height(6.dp))
 
             // Timeline labels: 06:00, 12:00, 18:00, Now
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 4.dp),
+                modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -898,7 +938,9 @@ private fun ActiveDevicesSection(
                 style = MaterialTheme.typography.titleMedium.copy(
                     fontWeight = FontWeight.SemiBold,
                     color = OnBackgroundSlate50
-                )
+                ),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
             Text(
                 text = "4 online in zone",
@@ -1049,7 +1091,8 @@ private fun DeviceCard(
                         fontWeight = FontWeight.SemiBold,
                         color = OnBackgroundSlate50
                     ),
-                    maxLines = 1
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
@@ -1057,7 +1100,8 @@ private fun DeviceCard(
                     style = MaterialTheme.typography.labelSmall.copy(
                         color = if (device.id == "soundwave_ultra") VioletAurora else OnSurfaceVariantSlate
                     ),
-                    maxLines = 1
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
 
@@ -1090,6 +1134,58 @@ private fun DeviceCard(
                         .fillMaxHeight()
                         .clip(RoundedCornerShape(999.dp))
                         .background(fillBrush)
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Floating in-place feedback toast matching Flutter's _FeedbackToast.
+ */
+@Composable
+private fun FeedbackToast(
+    message: String,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .shadow(
+                elevation = 16.dp,
+                shape = RoundedCornerShape(14.dp),
+                ambientColor = Color.Black.copy(alpha = 0.40f),
+                spotColor = Color.Black.copy(alpha = 0.40f)
+            )
+            .clip(RoundedCornerShape(14.dp))
+            .background(SurfaceContainerHighest)
+            .border(1.dp, OutlineGlass, RoundedCornerShape(14.dp))
+            .padding(horizontal = 16.dp, vertical = 6.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    color = OnBackgroundSlate50
+                ),
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(end = 8.dp)
+            )
+            TextButton(
+                onClick = onDismiss,
+                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+            ) {
+                Text(
+                    text = "OK",
+                    style = MaterialTheme.typography.labelLarge.copy(
+                        color = ElectricCyan,
+                        fontWeight = FontWeight.Bold
+                    )
                 )
             }
         }

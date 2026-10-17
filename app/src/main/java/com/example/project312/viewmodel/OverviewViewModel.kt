@@ -23,7 +23,7 @@ class OverviewViewModel : ViewModel() {
                 _uiState.update { current ->
                     current.copy(
                         currentMode = action.mode,
-                        feedbackMessage = "Habitat shifted to ${action.mode.label} Mode"
+                        feedbackMessage = "System Mode shifted to: ${action.mode.label}"
                     )
                 }
             }
@@ -38,11 +38,11 @@ class OverviewViewModel : ViewModel() {
                             item
                         }
                     }
-                    val toggledItem = current.instantActions.find { it.id == action.actionId }
-                    val statusText = if (toggledItem?.isEnabled == true) "Deactivated" else "Activated"
+                    val target = current.instantActions.find { it.id == action.actionId }
+                    val stateText = if (target?.isEnabled == false) "Engaged" else "Disengaged"
                     current.copy(
                         instantActions = updatedActions,
-                        feedbackMessage = "${toggledItem?.title ?: "Action"} $statusText"
+                        feedbackMessage = "${target?.title ?: "Action"}: $stateText"
                     )
                 }
             }
@@ -57,7 +57,12 @@ class OverviewViewModel : ViewModel() {
                             device
                         }
                     }
-                    current.copy(activeDevices = updatedDevices)
+                    val target = current.activeDevices.find { it.id == action.deviceId }
+                    val stateText = if (target?.isPoweredOn == false) "Powered On" else "Powered Down"
+                    current.copy(
+                        activeDevices = updatedDevices,
+                        feedbackMessage = "${target?.name ?: "Device"}: $stateText"
+                    )
                 }
             }
 

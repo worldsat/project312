@@ -1,5 +1,6 @@
 package com.example.project312.ui.screens.rooms
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
@@ -8,12 +9,17 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -57,9 +63,7 @@ import androidx.compose.material.icons.rounded.WbTwilight
 import androidx.compose.material.icons.rounded.Weekend
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Snackbar
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -73,6 +77,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.project312.model.RoomCategory
@@ -125,7 +130,7 @@ fun RoomsZonesScreen(
                 start = 16.dp,
                 end = 16.dp,
                 top = 16.dp,
-                bottom = 20.dp
+                bottom = 100.dp
             ),
             verticalArrangement = Arrangement.spacedBy(18.dp)
         ) {
@@ -174,23 +179,53 @@ fun RoomsZonesScreen(
             }
         }
 
-        // Local feedback snackbar
-        state.userFeedback?.let { feedback ->
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 16.dp, start = 20.dp, end = 20.dp)
-            ) {
-                Snackbar(
-                    action = {
-                        TextButton(onClick = { onAction(RoomsUiAction.ClearFeedback) }) {
-                            Text("OK", color = ElectricCyan)
-                        }
-                    },
-                    containerColor = SurfaceContainerHighest,
-                    contentColor = OnBackgroundSlate50
+        // Floating In-Place Feedback Banner
+        AnimatedVisibility(
+            visible = state.userFeedback != null,
+            enter = fadeIn() + slideInVertically { it / 2 },
+            exit = fadeOut() + slideOutVertically { it / 2 },
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 84.dp, start = 20.dp, end = 20.dp)
+        ) {
+            state.userFeedback?.let { feedback ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .shadow(
+                            elevation = 16.dp,
+                            shape = RoundedCornerShape(14.dp),
+                            ambientColor = Color.Black.copy(alpha = 0.40f),
+                            spotColor = Color.Black.copy(alpha = 0.40f)
+                        )
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(SurfaceContainerHighest)
+                        .border(1.dp, OutlineGlass, RoundedCornerShape(14.dp))
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(text = feedback, style = MaterialTheme.typography.bodyMedium)
+                    Text(
+                        text = feedback,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            color = OnBackgroundSlate50
+                        ),
+                        modifier = Modifier.weight(1f)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "OK",
+                        style = MaterialTheme.typography.labelLarge.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = ElectricCyan
+                        ),
+                        modifier = Modifier
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = ripple(color = ElectricCyan),
+                                onClick = { onAction(RoomsUiAction.ClearFeedback) }
+                            )
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
                 }
             }
         }
@@ -201,9 +236,10 @@ fun RoomsZonesScreen(
  * Ambient colored glow accents behind the rooms cockpit.
  */
 @Composable
-private fun RoomsAmbientBackdrops() {
+private fun BoxScope.RoomsAmbientBackdrops() {
     Box(
         modifier = Modifier
+            .align(Alignment.TopStart)
             .offset(x = (-40).dp, y = (-20).dp)
             .size(260.dp)
             .background(
@@ -219,7 +255,8 @@ private fun RoomsAmbientBackdrops() {
     )
     Box(
         modifier = Modifier
-            .offset(x = 180.dp, y = 340.dp)
+            .align(Alignment.TopEnd)
+            .offset(x = 50.dp, y = 320.dp)
             .size(280.dp)
             .background(
                 brush = Brush.radialGradient(
@@ -247,22 +284,26 @@ private fun RoomsHeader(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Column {
+        Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = "Active Habitats",
                 style = MaterialTheme.typography.headlineMedium.copy(
                     fontWeight = FontWeight.Bold,
+                    letterSpacing = (-0.5).sp,
                     color = OnBackgroundSlate50
                 )
             )
             Spacer(modifier = Modifier.height(2.dp))
             Text(
                 text = "$totalZonesCount Zones synched • Real-time environmental telemetrics",
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
                 style = MaterialTheme.typography.bodySmall.copy(
                     color = OnSurfaceVariantSlate
                 )
             )
         }
+        Spacer(modifier = Modifier.width(8.dp))
 
         // Configure Button
         Row(
@@ -396,21 +437,6 @@ private fun LivingRoomCard(
         cornerRadius = 24.dp,
         paddingValues = PaddingValues(16.dp)
     ) {
-        // Ambient Neon Room Scrim Gradient
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            ElectricCyan.copy(alpha = 0.08f),
-                            Color.Transparent,
-                            SurfaceContainer.copy(alpha = 0.40f)
-                        )
-                    )
-                )
-        )
-
         Column(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(14.dp)
@@ -422,6 +448,7 @@ private fun LivingRoomCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(
+                    modifier = Modifier.weight(1f),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
@@ -440,13 +467,15 @@ private fun LivingRoomCard(
                         )
                     }
 
-                    Column {
+                    Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = room.name,
                             style = MaterialTheme.typography.titleLarge.copy(
                                 fontWeight = FontWeight.Bold,
                                 color = OnBackgroundSlate50
-                            )
+                            ),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
@@ -462,11 +491,14 @@ private fun LivingRoomCard(
                                 text = room.subtitle,
                                 style = MaterialTheme.typography.labelSmall.copy(
                                     color = OnSurfaceVariantSlate
-                                )
+                                ),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
                     }
                 }
+                Spacer(modifier = Modifier.width(8.dp))
 
                 // Tactile Master Power Toggle
                 MasterPowerToggle(
@@ -519,16 +551,26 @@ private fun LivingRoomCard(
             }
 
             // Ambient Illumination Control Slider Preview
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Row(
+                        modifier = Modifier.weight(1f),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
                         Icon(Icons.Rounded.WbTwilight, null, tint = ElectricCyan, modifier = Modifier.size(14.dp))
-                        Text("Aurora Gradient Luster", style = MaterialTheme.typography.labelSmall.copy(color = OnSurfaceVariantSlate))
+                        Text(
+                            text = "Aurora Gradient Luster",
+                            style = MaterialTheme.typography.labelSmall.copy(color = OnSurfaceVariantSlate),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
                     }
+                    Spacer(modifier = Modifier.width(8.dp))
                     Text("${(room.sliderLevel * 100).toInt()}%", style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, color = ElectricCyan))
                 }
 
@@ -576,24 +618,6 @@ private fun MasterSuiteCard(
         cornerRadius = 24.dp,
         paddingValues = PaddingValues(16.dp)
     ) {
-        // Ambient Violet Flare
-        Box(
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .offset(x = 30.dp, y = (-20).dp)
-                .size(160.dp)
-                .background(
-                    brush = Brush.radialGradient(
-                        colors = listOf(
-                            VioletContainerVibrant.copy(alpha = 0.22f),
-                            VioletContainerVibrant.copy(alpha = 0.05f),
-                            Color.Transparent
-                        )
-                    ),
-                    shape = CircleShape
-                )
-        )
-
         Column(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(14.dp)
@@ -605,6 +629,7 @@ private fun MasterSuiteCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(
+                    modifier = Modifier.weight(1f),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
@@ -623,13 +648,15 @@ private fun MasterSuiteCard(
                         )
                     }
 
-                    Column {
+                    Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = room.name,
                             style = MaterialTheme.typography.titleLarge.copy(
                                 fontWeight = FontWeight.Bold,
                                 color = OnBackgroundSlate50
-                            )
+                            ),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
@@ -645,11 +672,14 @@ private fun MasterSuiteCard(
                                 text = room.subtitle,
                                 style = MaterialTheme.typography.labelSmall.copy(
                                     color = OnSurfaceVariantSlate
-                                )
+                                ),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
                     }
                 }
+                Spacer(modifier = Modifier.width(8.dp))
 
                 // Sleep Toggle
                 MasterPowerToggle(
@@ -684,9 +714,19 @@ private fun MasterSuiteCard(
                     ) {
                         Icon(Icons.Rounded.GraphicEq, null, tint = VioletAurora, modifier = Modifier.size(16.dp))
                     }
-                    Column {
-                        Text("Sound Shield", style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp, color = OnSurfaceVariantSlate))
-                        Text(room.noiseDb, style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold, color = OnBackgroundSlate50))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Sound Shield",
+                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp, color = OnSurfaceVariantSlate),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Text(
+                            text = room.noiseDb,
+                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold, color = OnBackgroundSlate50),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
                     }
                 }
 
@@ -709,9 +749,19 @@ private fun MasterSuiteCard(
                     ) {
                         Icon(Icons.Rounded.AcUnit, null, tint = ElectricCyanFixedDim, modifier = Modifier.size(16.dp))
                     }
-                    Column {
-                        Text("Deep Rem Temp", style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp, color = OnSurfaceVariantSlate))
-                        Text(room.deepRemTemp, style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold, color = OnBackgroundSlate50))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Deep Rem Temp",
+                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp, color = OnSurfaceVariantSlate),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Text(
+                            text = room.deepRemTemp,
+                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold, color = OnBackgroundSlate50),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
                     }
                 }
             }
@@ -722,10 +772,20 @@ private fun MasterSuiteCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                Row(
+                    modifier = Modifier.weight(1f),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
                     Icon(Icons.Rounded.Sensors, null, tint = EcoEmeraldDim, modifier = Modifier.size(15.dp))
-                    Text("Circadian rhythm cycle: Deep Sleep Mode", style = MaterialTheme.typography.labelSmall.copy(color = OnSurfaceVariantSlate))
+                    Text(
+                        text = "Circadian rhythm cycle: Deep Sleep Mode",
+                        style = MaterialTheme.typography.labelSmall.copy(color = OnSurfaceVariantSlate),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
+                Spacer(modifier = Modifier.width(8.dp))
                 Text("3 items synched", style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold, color = VioletAurora))
             }
         }
@@ -763,6 +823,7 @@ private fun HolodeckStudioCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(
+                    modifier = Modifier.weight(1f),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
@@ -781,14 +842,20 @@ private fun HolodeckStudioCard(
                         )
                     }
 
-                    Column {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
                             Text(
                                 text = room.name,
                                 style = MaterialTheme.typography.titleLarge.copy(
                                     fontWeight = FontWeight.Bold,
                                     color = OnBackgroundSlate50
-                                )
+                                ),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f, fill = false)
                             )
                             Box(
                                 modifier = Modifier
@@ -811,10 +878,13 @@ private fun HolodeckStudioCard(
                             text = room.subtitle,
                             style = MaterialTheme.typography.bodySmall.copy(
                                 color = OnSurfaceVariantSlate
-                            )
+                            ),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
                 }
+                Spacer(modifier = Modifier.width(8.dp))
 
                 // Overclock Power Toggle
                 MasterPowerToggle(
@@ -838,10 +908,20 @@ private fun HolodeckStudioCard(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Row(
+                            modifier = Modifier.weight(1f),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
                             Icon(Icons.Rounded.SpatialAudio, null, tint = ElectricCyan, modifier = Modifier.size(16.dp))
-                            Text("Spatial Audio Cluster", style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold, color = OnBackgroundSlate50))
+                            Text(
+                                text = "Spatial Audio Cluster",
+                                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold, color = OnBackgroundSlate50),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
                         }
+                        Spacer(modifier = Modifier.width(8.dp))
                         Text("${(room.spatialAudioLevel * 100).toInt()}%", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, color = ElectricCyan))
                     }
 
@@ -870,7 +950,14 @@ private fun HolodeckStudioCard(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("Dynamic RGB Sync: Reactive Prism", style = MaterialTheme.typography.labelSmall.copy(color = OnSurfaceVariantSlate))
+                        Text(
+                            text = "Dynamic RGB Sync: Reactive Prism",
+                            style = MaterialTheme.typography.labelSmall.copy(color = OnSurfaceVariantSlate),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
                             Box(modifier = Modifier.size(5.dp).clip(CircleShape).background(EcoEmeraldDim))
                             Text("12 ms latency", style = MaterialTheme.typography.labelSmall.copy(color = EcoEmeraldDim, fontWeight = FontWeight.SemiBold))
@@ -937,6 +1024,7 @@ private fun CyberKitchenCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(
+                    modifier = Modifier.weight(1f),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
@@ -955,13 +1043,15 @@ private fun CyberKitchenCard(
                         )
                     }
 
-                    Column {
+                    Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = room.name,
                             style = MaterialTheme.typography.titleLarge.copy(
                                 fontWeight = FontWeight.Bold,
                                 color = OnBackgroundSlate50
-                            )
+                            ),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
@@ -977,11 +1067,14 @@ private fun CyberKitchenCard(
                                 text = room.subtitle,
                                 style = MaterialTheme.typography.labelSmall.copy(
                                     color = OnSurfaceVariantSlate
-                                )
+                                ),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
                     }
                 }
+                Spacer(modifier = Modifier.width(8.dp))
 
                 // Auto-Guarded Pill
                 Row(
@@ -1071,10 +1164,20 @@ private fun CyberKitchenCard(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Row(
+                        modifier = Modifier.weight(1f),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
                         Icon(Icons.Rounded.GasMeter, null, tint = EcoEmeraldBright, modifier = Modifier.size(14.dp))
-                        Text("VOC & Methane Sensors: Nominal", style = MaterialTheme.typography.labelSmall.copy(color = OnSurfaceVariantSlate))
+                        Text(
+                            text = "VOC & Methane Sensors: Nominal",
+                            style = MaterialTheme.typography.labelSmall.copy(color = OnSurfaceVariantSlate),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
                     }
+                    Spacer(modifier = Modifier.width(8.dp))
                     Text("Smart Oven: Idle", style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium, color = OnBackgroundSlate50))
                 }
             }

@@ -48,7 +48,10 @@ class RoutinesViewModel : ViewModel() {
                     val sortedList = if (nextSort) {
                         current.routines.sortedBy { it.title }
                     } else {
-                        RoutineMockData.initialRoutines
+                        val currentMap = current.routines.associate { it.id to it.isEnabled }
+                        RoutineMockData.initialRoutines.map { r ->
+                            r.copy(isEnabled = currentMap[r.id] ?: r.isEnabled)
+                        }
                     }
                     current.copy(
                         routines = sortedList,

@@ -1,5 +1,6 @@
 package com.example.project312.ui.screens.routines
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -7,12 +8,17 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -63,9 +69,8 @@ import androidx.compose.material.icons.rounded.Videocam
 import androidx.compose.material.icons.rounded.WbTwilight
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Snackbar
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -73,6 +78,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -133,7 +139,7 @@ fun AutomationsRoutinesScreen(
                 start = 16.dp,
                 end = 16.dp,
                 top = 16.dp,
-                bottom = 20.dp
+                bottom = 100.dp
             ),
             verticalArrangement = Arrangement.spacedBy(18.dp)
         ) {
@@ -155,6 +161,7 @@ fun AutomationsRoutinesScreen(
             item {
                 ScheduledSequencesHeader(
                     activeCount = state.routines.count { it.isEnabled },
+                    isSortedAlphabetical = state.isSortedAlphabetical,
                     onSortToggle = { onAction(RoutinesUiAction.ToggleSortMatrix) }
                 )
             }
@@ -168,23 +175,54 @@ fun AutomationsRoutinesScreen(
             }
         }
 
-        // Local feedback snackbar
-        state.userFeedback?.let { feedback ->
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 16.dp, start = 20.dp, end = 20.dp)
-            ) {
-                Snackbar(
-                    action = {
-                        TextButton(onClick = { onAction(RoutinesUiAction.ClearFeedback) }) {
-                            Text("OK", color = ElectricCyan)
-                        }
-                    },
-                    containerColor = SurfaceContainerHighest,
-                    contentColor = OnBackgroundSlate50
+        // Local feedback snackbar overlay
+        AnimatedVisibility(
+            visible = state.userFeedback != null,
+            enter = fadeIn() + slideInVertically { it / 2 },
+            exit = fadeOut() + slideOutVertically { it / 2 },
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 80.dp, start = 20.dp, end = 20.dp)
+        ) {
+            state.userFeedback?.let { feedback ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .shadow(
+                            elevation = 16.dp,
+                            shape = RoundedCornerShape(12.dp),
+                            ambientColor = Color.Black.copy(alpha = 0.50f),
+                            spotColor = Color.Black.copy(alpha = 0.50f)
+                        )
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(SurfaceContainerHighest)
+                        .border(1.dp, ElectricCyan.copy(alpha = 0.30f), RoundedCornerShape(12.dp))
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(text = feedback, style = MaterialTheme.typography.bodyMedium)
+                    Text(
+                        text = feedback,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontSize = 13.sp,
+                            color = OnBackgroundSlate50
+                        ),
+                        modifier = Modifier.weight(1f)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "OK",
+                        style = MaterialTheme.typography.labelLarge.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = ElectricCyan
+                        ),
+                        modifier = Modifier
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = ripple(color = ElectricCyan),
+                                onClick = { onAction(RoutinesUiAction.ClearFeedback) }
+                            )
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
                 }
             }
         }
@@ -195,10 +233,11 @@ fun AutomationsRoutinesScreen(
  * Ambient colored glow accents behind the routines cockpit.
  */
 @Composable
-private fun RoutinesAmbientBackdrops() {
+private fun BoxScope.RoutinesAmbientBackdrops() {
     Box(
         modifier = Modifier
-            .offset(x = 180.dp, y = (-20).dp)
+            .align(Alignment.TopEnd)
+            .offset(x = 40.dp, y = (-20).dp)
             .size(260.dp)
             .background(
                 brush = Brush.radialGradient(
@@ -213,6 +252,7 @@ private fun RoutinesAmbientBackdrops() {
     )
     Box(
         modifier = Modifier
+            .align(Alignment.TopStart)
             .offset(x = (-40).dp, y = 300.dp)
             .size(280.dp)
             .background(
@@ -262,6 +302,7 @@ private fun ProtocolSynapseCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(
+                    modifier = Modifier.weight(1f),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
@@ -289,7 +330,7 @@ private fun ProtocolSynapseCard(
                         )
                     }
 
-                    Column {
+                    Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = "PROTOCOL SYNAPSE",
                             style = MaterialTheme.typography.labelSmall.copy(
@@ -299,15 +340,20 @@ private fun ProtocolSynapseCard(
                                 color = ElectricCyanFixedDim
                             )
                         )
+                        Spacer(modifier = Modifier.height(1.dp))
                         Text(
                             text = "AI Autonomous Engine Active",
                             style = MaterialTheme.typography.titleMedium.copy(
+                                fontSize = 14.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = OnBackgroundSlate50
-                            )
+                            ),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
                 }
+                Spacer(modifier = Modifier.width(8.dp))
 
                 // Neural Sync Pill
                 Row(
@@ -327,6 +373,7 @@ private fun ProtocolSynapseCard(
                     Text(
                         text = "Neural Sync",
                         style = MaterialTheme.typography.labelSmall.copy(
+                            fontSize = 11.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = EcoEmeraldBright
                         )
@@ -349,6 +396,7 @@ private fun ProtocolSynapseCard(
                 ) {
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Row(
+                            modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(5.dp)
                         ) {
@@ -361,15 +409,24 @@ private fun ProtocolSynapseCard(
                             Text(
                                 text = "Triggers Fired",
                                 style = MaterialTheme.typography.labelSmall.copy(
+                                    fontSize = 11.sp,
                                     color = OnSurfaceVariantSlate
-                                )
+                                ),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f)
                             )
                         }
 
-                        Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.Bottom,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
                             Text(
                                 text = "${stats.triggersFiredCount}",
                                 style = MaterialTheme.typography.headlineMedium.copy(
+                                    fontSize = 22.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = OnBackgroundSlate50
                                 )
@@ -377,10 +434,15 @@ private fun ProtocolSynapseCard(
                             Text(
                                 text = stats.triggersSubtitle,
                                 style = MaterialTheme.typography.labelSmall.copy(
+                                    fontSize = 11.sp,
                                     color = EcoEmeraldBright,
                                     fontWeight = FontWeight.Medium
                                 ),
-                                modifier = Modifier.padding(bottom = 3.dp)
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .padding(bottom = 3.dp)
                             )
                         }
                     }
@@ -396,6 +458,7 @@ private fun ProtocolSynapseCard(
                 ) {
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Row(
+                            modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(5.dp)
                         ) {
@@ -408,15 +471,24 @@ private fun ProtocolSynapseCard(
                             Text(
                                 text = "Success Vector",
                                 style = MaterialTheme.typography.labelSmall.copy(
+                                    fontSize = 11.sp,
                                     color = OnSurfaceVariantSlate
-                                )
+                                ),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f)
                             )
                         }
 
-                        Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.Bottom,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
                             Text(
                                 text = "${stats.successVectorPercent}",
                                 style = MaterialTheme.typography.headlineMedium.copy(
+                                    fontSize = 22.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = OnBackgroundSlate50
                                 )
@@ -424,10 +496,15 @@ private fun ProtocolSynapseCard(
                             Text(
                                 text = stats.successSubtitle,
                                 style = MaterialTheme.typography.labelSmall.copy(
+                                    fontSize = 11.sp,
                                     color = ElectricCyanFixedDim,
                                     fontWeight = FontWeight.Medium
                                 ),
-                                modifier = Modifier.padding(bottom = 3.dp)
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .padding(bottom = 3.dp)
                             )
                         }
                     }
@@ -470,7 +547,7 @@ private fun ConstructAutomationCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = "LOGIC ARCHITECT",
                         style = MaterialTheme.typography.labelSmall.copy(
@@ -484,11 +561,15 @@ private fun ConstructAutomationCard(
                     Text(
                         text = "Construct Automation",
                         style = MaterialTheme.typography.titleLarge.copy(
+                            fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                             color = OnBackgroundSlate50
-                        )
+                        ),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
+                Spacer(modifier = Modifier.width(8.dp))
 
                 Box(
                     modifier = Modifier
@@ -522,6 +603,7 @@ private fun ConstructAutomationCard(
                 ) {
                     // IF Block
                     Row(
+                        modifier = Modifier.weight(1f),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
@@ -539,7 +621,7 @@ private fun ConstructAutomationCard(
                                 modifier = Modifier.size(15.dp)
                             )
                         }
-                        Column {
+                        Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = "IF Condition",
                                 style = MaterialTheme.typography.labelSmall.copy(
@@ -550,27 +632,36 @@ private fun ConstructAutomationCard(
                             Text(
                                 text = "Sensor / Event",
                                 style = MaterialTheme.typography.bodySmall.copy(
+                                    fontSize = 12.sp,
                                     fontWeight = FontWeight.SemiBold,
                                     color = OnBackgroundSlate50
-                                )
+                                ),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
                     }
 
                     // Pulsing Arrow
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
-                        contentDescription = null,
-                        tint = ElectricCyan.copy(alpha = arrowAlpha),
-                        modifier = Modifier.size(18.dp)
-                    )
+                    Box(modifier = Modifier.padding(horizontal = 6.dp)) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
+                            contentDescription = null,
+                            tint = ElectricCyan.copy(alpha = arrowAlpha),
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
 
                     // THEN Block
                     Row(
+                        modifier = Modifier.weight(1f),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.End
                     ) {
-                        Column(horizontalAlignment = Alignment.End) {
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            horizontalAlignment = Alignment.End
+                        ) {
                             Text(
                                 text = "THEN Protocol",
                                 style = MaterialTheme.typography.labelSmall.copy(
@@ -581,11 +672,15 @@ private fun ConstructAutomationCard(
                             Text(
                                 text = "Multi-Action",
                                 style = MaterialTheme.typography.bodySmall.copy(
+                                    fontSize = 12.sp,
                                     fontWeight = FontWeight.SemiBold,
                                     color = OnBackgroundSlate50
-                                )
+                                ),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
+                        Spacer(modifier = Modifier.width(8.dp))
                         Box(
                             modifier = Modifier
                                 .size(30.dp)
@@ -647,6 +742,7 @@ private fun ConstructAutomationCard(
 @Composable
 private fun ScheduledSequencesHeader(
     activeCount: Int,
+    isSortedAlphabetical: Boolean,
     onSortToggle: () -> Unit
 ) {
     Row(
@@ -657,15 +753,20 @@ private fun ScheduledSequencesHeader(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Row(
+            modifier = Modifier.weight(1f),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
                 text = "Scheduled Sequences",
                 style = MaterialTheme.typography.titleMedium.copy(
+                    fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = OnBackgroundSlate50
-                )
+                ),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f, fill = false)
             )
             Box(
                 modifier = Modifier
@@ -676,24 +777,31 @@ private fun ScheduledSequencesHeader(
                 Text(
                     text = "$activeCount Active",
                     style = MaterialTheme.typography.labelSmall.copy(
+                        fontSize = 11.sp,
                         color = ElectricCyanFixedDim,
                         fontWeight = FontWeight.SemiBold
                     )
                 )
             }
         }
+        Spacer(modifier = Modifier.width(8.dp))
 
         Row(
             modifier = Modifier
                 .clip(RoundedCornerShape(8.dp))
-                .clickable(onClick = onSortToggle)
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = ripple(color = ElectricCyan),
+                    onClick = onSortToggle
+                )
                 .padding(horizontal = 6.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(3.dp)
         ) {
             Text(
-                text = "Sort Matrix",
+                text = if (isSortedAlphabetical) "Sorted: A-Z" else "Sort Matrix",
                 style = MaterialTheme.typography.labelSmall.copy(
+                    fontSize = 11.sp,
                     color = OnSurfaceVariantSlate
                 )
             )
@@ -779,10 +887,11 @@ private fun RoutineSequenceCard(
                         )
                     }
 
-                    Column {
+                    Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = routine.title,
                             style = MaterialTheme.typography.titleMedium.copy(
+                                fontSize = 15.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = OnBackgroundSlate50
                             ),
@@ -806,17 +915,18 @@ private fun RoutineSequenceCard(
                                     color = ElectricCyanFixedDim
                                 ),
                                 maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f)
                             )
                         }
                     }
                 }
+                Spacer(modifier = Modifier.width(8.dp))
 
                 // Toggle Switch
                 RoutineSwitch(
                     checked = routine.isEnabled,
-                    onCheckedChange = { onToggle() },
-                    modifier = Modifier.padding(start = 8.dp)
+                    onCheckedChange = { onToggle() }
                 )
             }
 
@@ -886,22 +996,23 @@ private fun ActionSubTile(
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
+            horizontalArrangement = Arrangement.spacedBy(5.dp)
         ) {
             Icon(
                 imageVector = iconVector,
                 contentDescription = null,
                 tint = iconTint,
-                modifier = Modifier.size(15.dp)
+                modifier = Modifier.size(14.dp)
             )
             Text(
                 text = action.label,
                 style = MaterialTheme.typography.bodySmall.copy(
-                    fontSize = 11.sp,
+                    fontSize = 10.sp,
                     color = OnSurfaceVariantSlate
                 ),
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f)
             )
         }
     }

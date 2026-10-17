@@ -1,5 +1,6 @@
 package com.example.project312.ui.screens.energy
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
@@ -7,6 +8,10 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -14,6 +19,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -59,6 +65,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
@@ -67,6 +74,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.project312.model.ApplianceAccent
@@ -121,7 +129,7 @@ fun EnergyAnalyticsScreen(
                 start = 16.dp,
                 end = 16.dp,
                 top = 16.dp,
-                bottom = 20.dp
+                bottom = 100.dp
             ),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
@@ -163,23 +171,59 @@ fun EnergyAnalyticsScreen(
             }
         }
 
-        // Local feedback snackbar
-        state.userFeedback?.let { feedback ->
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 16.dp, start = 20.dp, end = 20.dp)
-            ) {
-                Snackbar(
-                    action = {
-                        TextButton(onClick = { onAction(EnergyUiAction.ClearFeedback) }) {
-                            Text("OK", color = ElectricCyan)
-                        }
-                    },
-                    containerColor = SurfaceContainerHighest,
-                    contentColor = OnBackgroundSlate50
+        // Local feedback snackbar overlay matching Flutter's Positioned container
+        AnimatedVisibility(
+            visible = state.userFeedback != null,
+            enter = fadeIn(animationSpec = tween(200)) + slideInVertically(animationSpec = tween(250)) { it / 2 },
+            exit = fadeOut(animationSpec = tween(150)) + slideOutVertically(animationSpec = tween(200)) { it / 2 },
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 80.dp, start = 20.dp, end = 20.dp)
+        ) {
+            state.userFeedback?.let { feedback ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .shadow(
+                            elevation = 16.dp,
+                            shape = RoundedCornerShape(12.dp),
+                            ambientColor = Color.Black.copy(alpha = 0.50f),
+                            spotColor = Color.Black.copy(alpha = 0.50f)
+                        )
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(SurfaceContainerHighest)
+                        .border(
+                            width = 1.dp,
+                            color = ElectricCyan.copy(alpha = 0.30f),
+                            shape = RoundedCornerShape(12.dp)
+                        )
+                        .padding(start = 16.dp, top = 4.dp, bottom = 4.dp, end = 8.dp)
                 ) {
-                    Text(text = feedback, style = MaterialTheme.typography.bodyMedium)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = feedback,
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontSize = 13.sp,
+                                color = OnBackgroundSlate50
+                            ),
+                            modifier = Modifier.weight(1f)
+                        )
+                        TextButton(
+                            onClick = { onAction(EnergyUiAction.ClearFeedback) },
+                            contentPadding = PaddingValues(horizontal = 8.dp)
+                        ) {
+                            Text(
+                                text = "OK",
+                                style = MaterialTheme.typography.labelLarge.copy(
+                                    color = ElectricCyan,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -190,9 +234,10 @@ fun EnergyAnalyticsScreen(
  * Ambient Light Backdrops for authentic cyber glassmorphism depth.
  */
 @Composable
-private fun EnergyAmbientBackdrops() {
+private fun BoxScope.EnergyAmbientBackdrops() {
     Box(
         modifier = Modifier
+            .align(Alignment.TopStart)
             .offset(x = (-40).dp, y = (-20).dp)
             .size(260.dp)
             .background(
@@ -208,7 +253,8 @@ private fun EnergyAmbientBackdrops() {
     )
     Box(
         modifier = Modifier
-            .offset(x = 180.dp, y = 140.dp)
+            .align(Alignment.TopEnd)
+            .offset(x = 40.dp, y = 140.dp)
             .size(280.dp)
             .background(
                 brush = Brush.radialGradient(
@@ -223,6 +269,7 @@ private fun EnergyAmbientBackdrops() {
     )
     Box(
         modifier = Modifier
+            .align(Alignment.TopStart)
             .offset(x = 40.dp, y = 520.dp)
             .size(300.dp)
             .background(
@@ -259,21 +306,26 @@ private fun EnergyMatrixHeader() {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Column {
+        Column(
+            modifier = Modifier.weight(1f)
+        ) {
             Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     text = "Energy Matrix",
                     style = MaterialTheme.typography.headlineMedium.copy(
+                        fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
                         color = OnBackgroundSlate50
-                    )
+                    ),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
+                Spacer(modifier = Modifier.width(8.dp))
                 Box(
                     modifier = Modifier
-                        .size(6.dp)
+                        .size(7.dp)
                         .clip(CircleShape)
                         .background(EcoEmeraldDim.copy(alpha = dotAlpha))
                 )
@@ -282,10 +334,15 @@ private fun EnergyMatrixHeader() {
             Text(
                 text = "Live telemetry & predictive eco-routing",
                 style = MaterialTheme.typography.bodySmall.copy(
+                    fontSize = 12.sp,
                     color = OnSurfaceVariantSlate
-                )
+                ),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
+
+        Spacer(modifier = Modifier.width(8.dp))
 
         // Grid Sync Pill
         Row(
@@ -306,6 +363,7 @@ private fun EnergyMatrixHeader() {
             Text(
                 text = "Grid Sync",
                 style = MaterialTheme.typography.labelSmall.copy(
+                    fontSize = 11.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = EcoEmeraldBright
                 )
@@ -444,17 +502,20 @@ private fun PowerFluxSection(
                             Text(
                                 text = "+${powerFlux.solarInflowKw}",
                                 style = MaterialTheme.typography.headlineMedium.copy(
+                                    fontSize = 22.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = EcoEmeraldBright
                                 )
                             )
+                            Spacer(modifier = Modifier.width(2.dp))
                             Text(
-                                text = " kW",
+                                text = "kW",
                                 style = MaterialTheme.typography.bodySmall.copy(
+                                    fontSize = 12.sp,
                                     color = EcoEmeraldDim,
                                     fontWeight = FontWeight.Medium
                                 ),
-                                modifier = Modifier.padding(bottom = 3.dp)
+                                modifier = Modifier.padding(bottom = 2.dp)
                             )
                         }
 
@@ -464,7 +525,9 @@ private fun PowerFluxSection(
                             style = MaterialTheme.typography.labelSmall.copy(
                                 fontSize = 10.sp,
                                 color = OnSurfaceVariantSlate.copy(alpha = 0.8f)
-                            )
+                            ),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
                 }
@@ -497,6 +560,7 @@ private fun PowerFluxSection(
                                 Text(
                                     text = "Grid Pull",
                                     style = MaterialTheme.typography.labelSmall.copy(
+                                        fontSize = 11.sp,
                                         color = OnSurfaceVariantSlate
                                     )
                                 )
@@ -515,17 +579,20 @@ private fun PowerFluxSection(
                             Text(
                                 text = "${powerFlux.gridPullKw}",
                                 style = MaterialTheme.typography.headlineMedium.copy(
+                                    fontSize = 22.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = VioletAurora
                                 )
                             )
+                            Spacer(modifier = Modifier.width(2.dp))
                             Text(
-                                text = " kW",
+                                text = "kW",
                                 style = MaterialTheme.typography.bodySmall.copy(
+                                    fontSize = 12.sp,
                                     color = VioletAurora.copy(alpha = 0.8f),
                                     fontWeight = FontWeight.Medium
                                 ),
-                                modifier = Modifier.padding(bottom = 3.dp)
+                                modifier = Modifier.padding(bottom = 2.dp)
                             )
                         }
 
@@ -535,7 +602,9 @@ private fun PowerFluxSection(
                             style = MaterialTheme.typography.labelSmall.copy(
                                 fontSize = 10.sp,
                                 color = OnSurfaceVariantSlate.copy(alpha = 0.8f)
-                            )
+                            ),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
                 }
@@ -567,10 +636,13 @@ private fun ConsumptionDynamicsSection(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
+                Column(
+                    modifier = Modifier.weight(1f)
+                ) {
                     Text(
                         text = "Consumption Dynamics",
                         style = MaterialTheme.typography.titleMedium.copy(
+                            fontSize = 16.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = OnBackgroundSlate50
                         )
@@ -578,10 +650,15 @@ private fun ConsumptionDynamicsSection(
                     Text(
                         text = "Timeline variance & peak telemetry",
                         style = MaterialTheme.typography.bodySmall.copy(
+                            fontSize = 11.sp,
                             color = OnSurfaceVariantSlate
-                        )
+                        ),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
+
+                Spacer(modifier = Modifier.width(8.dp))
 
                 // Filter Pill Group (Day, Week, Month, Year)
                 Row(
@@ -595,10 +672,12 @@ private fun ConsumptionDynamicsSection(
                         val isSelected = period == data.selectedPeriod
                         val bg by animateColorAsState(
                             targetValue = if (isSelected) ElectricCyan else Color.Transparent,
+                            animationSpec = tween(200),
                             label = "tabBg"
                         )
                         val textColor by animateColorAsState(
                             targetValue = if (isSelected) ElectricCyanDark else OnSurfaceVariantSlate,
+                            animationSpec = tween(200),
                             label = "tabText"
                         )
 
@@ -611,12 +690,13 @@ private fun ConsumptionDynamicsSection(
                                     indication = null,
                                     onClick = { onPeriodSelect(period) }
                                 )
-                                .padding(horizontal = 10.dp, vertical = 4.dp),
+                                .padding(horizontal = 9.dp, vertical = 4.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
                                 text = period.label,
                                 style = MaterialTheme.typography.labelSmall.copy(
+                                    fontSize = 11.sp,
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                                     color = textColor
                                 )
@@ -645,6 +725,7 @@ private fun ConsumptionDynamicsSection(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Row(
+                            modifier = Modifier.weight(1f),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(5.dp)
                         ) {
@@ -657,14 +738,20 @@ private fun ConsumptionDynamicsSection(
                             Text(
                                 text = data.offPeakWindow,
                                 style = MaterialTheme.typography.labelSmall.copy(
+                                    fontSize = 11.sp,
                                     color = ElectricCyanFixedDim
-                                )
+                                ),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
+
+                        Spacer(modifier = Modifier.width(8.dp))
 
                         Text(
                             text = data.costDelta,
                             style = MaterialTheme.typography.labelSmall.copy(
+                                fontSize = 11.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = EcoEmeraldBright
                             )
@@ -729,6 +816,7 @@ private fun ConsumptionDynamicsSection(
                         Text(
                             text = data.dailyRunRate,
                             style = MaterialTheme.typography.titleMedium.copy(
+                                fontSize = 14.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = OnBackgroundSlate50
                             )
@@ -763,6 +851,7 @@ private fun ConsumptionDynamicsSection(
                         Text(
                             text = data.cycleSavings,
                             style = MaterialTheme.typography.titleMedium.copy(
+                                fontSize = 14.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = OnBackgroundSlate50
                             )
@@ -788,8 +877,7 @@ private fun ActiveApplianceDrainSection(
         paddingValues = PaddingValues(16.dp)
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+            modifier = Modifier.fillMaxWidth()
         ) {
             // Header
             Row(
@@ -797,10 +885,13 @@ private fun ActiveApplianceDrainSection(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
+                Column(
+                    modifier = Modifier.weight(1f)
+                ) {
                     Text(
                         text = "Active Appliance Drain",
                         style = MaterialTheme.typography.titleMedium.copy(
+                            fontSize = 16.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = OnBackgroundSlate50
                         )
@@ -808,10 +899,15 @@ private fun ActiveApplianceDrainSection(
                     Text(
                         text = "Real-time hardware power allotment",
                         style = MaterialTheme.typography.bodySmall.copy(
+                            fontSize = 11.sp,
                             color = OnSurfaceVariantSlate
-                        )
+                        ),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
+
+                Spacer(modifier = Modifier.width(8.dp))
 
                 Box(
                     modifier = Modifier
@@ -822,6 +918,7 @@ private fun ActiveApplianceDrainSection(
                     Text(
                         text = "${appliances.size} Active",
                         style = MaterialTheme.typography.labelSmall.copy(
+                            fontSize = 11.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = OnBackgroundSlate50
                         )
@@ -829,12 +926,19 @@ private fun ActiveApplianceDrainSection(
                 }
             }
 
-            // List of Appliance Cards
-            appliances.forEach { appliance ->
-                ApplianceCardItem(
-                    item = appliance,
-                    onApplyEcoTip = { onApplyEcoTip(appliance.id) }
-                )
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // List of Appliance Cards spaced by 10.dp
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                appliances.forEach { appliance ->
+                    ApplianceCardItem(
+                        item = appliance,
+                        onApplyEcoTip = { onApplyEcoTip(appliance.id) }
+                    )
+                }
             }
         }
     }
@@ -890,6 +994,7 @@ private fun ApplianceCardItem(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(
+                    modifier = Modifier.weight(1f),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
@@ -908,22 +1013,30 @@ private fun ApplianceCardItem(
                         )
                     }
 
-                    Column {
+                    Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = item.name,
                             style = MaterialTheme.typography.bodyMedium.copy(
+                                fontSize = 13.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = OnBackgroundSlate50
-                            )
+                            ),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                         Text(
                             text = item.zoneDescription,
                             style = MaterialTheme.typography.labelSmall.copy(
+                                fontSize = 10.sp,
                                 color = OnSurfaceVariantSlate
-                            )
+                            ),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
                 }
+
+                Spacer(modifier = Modifier.width(8.dp))
 
                 Column(
                     horizontalAlignment = Alignment.End
@@ -933,8 +1046,9 @@ private fun ApplianceCardItem(
                         horizontalArrangement = Arrangement.spacedBy(2.dp)
                     ) {
                         Text(
-                            text = "${item.powerKw}",
+                            text = String.format(java.util.Locale.US, "%.2f", item.powerKw),
                             style = MaterialTheme.typography.titleMedium.copy(
+                                fontSize = 15.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = OnBackgroundSlate50
                             )
@@ -942,6 +1056,7 @@ private fun ApplianceCardItem(
                         Text(
                             text = "kW",
                             style = MaterialTheme.typography.labelSmall.copy(
+                                fontSize = 10.sp,
                                 color = OnSurfaceVariantSlate
                             )
                         )
@@ -949,6 +1064,7 @@ private fun ApplianceCardItem(
                     Text(
                         text = "${item.percentage}%",
                         style = MaterialTheme.typography.labelSmall.copy(
+                            fontSize = 11.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = barColor
                         )
@@ -1001,9 +1117,12 @@ private fun ApplianceCardItem(
                                 fontSize = 10.sp,
                                 color = OnSurfaceVariantSlate
                             ),
-                            maxLines = 1
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
+
+                    Spacer(modifier = Modifier.width(6.dp))
 
                     Box(
                         modifier = Modifier
@@ -1051,7 +1170,7 @@ private fun NexusIntelligenceSection(
         Box(
             modifier = Modifier
                 .align(Alignment.TopEnd)
-                .offset(x = 30.dp, y = (-20).dp)
+                .offset(x = 20.dp, y = (-20).dp)
                 .size(160.dp)
                 .background(
                     brush = Brush.radialGradient(
@@ -1076,6 +1195,7 @@ private fun NexusIntelligenceSection(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(
+                    modifier = Modifier.weight(1f),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
@@ -1093,10 +1213,11 @@ private fun NexusIntelligenceSection(
                             modifier = Modifier.size(22.dp)
                         )
                     }
-                    Column {
+                    Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = "Nexus Intelligence",
                             style = MaterialTheme.typography.titleMedium.copy(
+                                fontSize = 16.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = OnBackgroundSlate50
                             )
@@ -1104,11 +1225,16 @@ private fun NexusIntelligenceSection(
                         Text(
                             text = "Real-time dynamic mesh optimization",
                             style = MaterialTheme.typography.bodySmall.copy(
+                                fontSize = 11.sp,
                                 color = OnSurfaceVariantSlate
-                            )
+                            ),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
                 }
+
+                Spacer(modifier = Modifier.width(8.dp))
 
                 Box(
                     modifier = Modifier
@@ -1119,6 +1245,7 @@ private fun NexusIntelligenceSection(
                     Text(
                         text = "AI Active",
                         style = MaterialTheme.typography.labelSmall.copy(
+                            fontSize = 11.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = EcoEmeraldBright
                         )
@@ -1187,13 +1314,16 @@ private fun NexusIntelligenceSection(
                             Text(
                                 text = "${intelligence.ecoScore}",
                                 style = MaterialTheme.typography.headlineMedium.copy(
+                                    fontSize = 22.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = OnBackgroundSlate50
                                 )
                             )
+                            Spacer(modifier = Modifier.width(3.dp))
                             Text(
-                                text = " / ${intelligence.maxScore}",
+                                text = "/ ${intelligence.maxScore}",
                                 style = MaterialTheme.typography.bodySmall.copy(
+                                    fontSize = 12.sp,
                                     color = OnSurfaceVariantSlate
                                 ),
                                 modifier = Modifier.padding(bottom = 3.dp)
@@ -1202,16 +1332,21 @@ private fun NexusIntelligenceSection(
                         Text(
                             text = intelligence.habitatStatus,
                             style = MaterialTheme.typography.titleMedium.copy(
-                                fontSize = 14.sp,
+                                fontSize = 13.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = EcoEmeraldBright
-                            )
+                            ),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                         Text(
                             text = intelligence.comparisonText,
                             style = MaterialTheme.typography.labelSmall.copy(
+                                fontSize = 10.sp,
                                 color = OnSurfaceVariantSlate
-                            )
+                            ),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
                 }
@@ -1244,6 +1379,7 @@ private fun NexusIntelligenceSection(
                             Text(
                                 text = intelligence.suggestionTitle,
                                 style = MaterialTheme.typography.labelLarge.copy(
+                                    fontSize = 13.sp,
                                     fontWeight = FontWeight.SemiBold,
                                     color = OnBackgroundSlate50
                                 )
@@ -1252,6 +1388,7 @@ private fun NexusIntelligenceSection(
                             Text(
                                 text = intelligence.suggestionDescription,
                                 style = MaterialTheme.typography.bodySmall.copy(
+                                    fontSize = 11.sp,
                                     color = OnSurfaceVariantSlate
                                 )
                             )
@@ -1295,9 +1432,12 @@ private fun NexusIntelligenceSection(
                                     "Apply Auto-Power Optimization (Save 0.4 kWh)"
                                 },
                                 style = MaterialTheme.typography.labelLarge.copy(
+                                    fontSize = 12.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = if (isEngaged) Color(0xFF003824) else ElectricCyanDark
-                                )
+                                ),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
                     }

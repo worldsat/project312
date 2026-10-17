@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.EnergySavingsLeaf
@@ -153,7 +154,7 @@ fun PowerFluxGauge(
                 verticalAlignment = Alignment.Bottom
             ) {
                 Text(
-                    text = String.format("%.2f", totalDemandKw),
+                    text = String.format(java.util.Locale.US, "%.2f", totalDemandKw),
                     style = MaterialTheme.typography.displayLarge.copy(
                         fontSize = 44.sp,
                         fontWeight = FontWeight.Bold,
@@ -163,6 +164,7 @@ fun PowerFluxGauge(
                 Text(
                     text = " kW",
                     style = MaterialTheme.typography.titleMedium.copy(
+                        fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
                         color = ElectricCyanFixedDim
                     ),
@@ -170,7 +172,7 @@ fun PowerFluxGauge(
                 )
             }
 
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(6.dp))
 
             // Self-Sustained Pill Chip
             Row(
@@ -186,9 +188,11 @@ fun PowerFluxGauge(
                     tint = EcoEmeraldBright,
                     modifier = Modifier.size(13.dp)
                 )
+                Spacer(modifier = Modifier.width(4.dp))
                 Text(
-                    text = " $selfSustainedPercent% Self-Sustained",
+                    text = "$selfSustainedPercent% Self-Sustained",
                     style = MaterialTheme.typography.labelSmall.copy(
+                        fontSize = 11.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = EcoEmeraldBright
                     )
