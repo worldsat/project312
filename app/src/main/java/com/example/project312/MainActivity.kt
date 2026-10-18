@@ -10,6 +10,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -23,6 +24,8 @@ import com.example.project312.navigation.navigateToDestination
 import com.example.project312.ui.components.NexusBottomNavBar
 import com.example.project312.ui.components.NexusTopAppBar
 import com.example.project312.ui.theme.NexusHabitatTheme
+import com.example.project312.ui.components.AuthBottomSheet
+import com.example.project312.viewmodel.AuthViewModel
 import com.example.project312.viewmodel.EnergyViewModel
 import com.example.project312.viewmodel.OverviewViewModel
 import com.example.project312.viewmodel.RoomsViewModel
@@ -47,12 +50,15 @@ fun NexusHabitatApp(
     energyViewModel: EnergyViewModel = viewModel(),
     routinesViewModel: RoutinesViewModel = viewModel(),
     roomsViewModel: RoomsViewModel = viewModel(),
-    settingsViewModel: SettingsViewModel = viewModel()
+    settingsViewModel: SettingsViewModel = viewModel(),
+    authViewModel: AuthViewModel = viewModel()
 ) {
     val navController = rememberNavController()
     val overviewState by overviewViewModel.uiState.collectAsStateWithLifecycle()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
+
+    var showAuthSheet by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
 
     val currentDestination = when (currentRoute) {
         Screen.Energy.route -> NavDestination.ENERGY
@@ -75,7 +81,7 @@ fun NexusHabitatApp(
                     overviewViewModel.onAction(OverviewUiAction.ToggleNotifications)
                 },
                 onAvatarClick = {
-                    overviewViewModel.onAction(OverviewUiAction.OpenUserProfile)
+                    showAuthSheet = true
                 }
             )
         },
@@ -100,5 +106,12 @@ fun NexusHabitatApp(
                 .fillMaxSize()
                 .padding(innerPadding)
         )
+
+        if (showAuthSheet) {
+            com.example.project312.ui.components.AuthBottomSheet(
+                authViewModel = authViewModel,
+                onDismiss = { showAuthSheet = false }
+            )
+        }
     }
 }

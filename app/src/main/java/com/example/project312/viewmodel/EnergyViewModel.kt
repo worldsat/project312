@@ -1,7 +1,10 @@
 package com.example.project312.viewmodel
 
 import androidx.lifecycle.ViewModel
-import com.example.project312.data.EnergyMockData
+import androidx.lifecycle.viewModelScope
+import com.example.project312.data.FirebaseFirestoreRepository
+import com.example.project312.model.ApplianceAccent
+import com.example.project312.model.ApplianceDrainItem
 import com.example.project312.model.EnergyUiAction
 import com.example.project312.model.EnergyUiState
 import com.example.project312.model.TimelinePeriod
@@ -9,11 +12,67 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
-class EnergyViewModel : ViewModel() {
+class EnergyViewModel(
+    private val firestoreRepository: FirebaseFirestoreRepository = FirebaseFirestoreRepository()
+) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(EnergyMockData.createInitialState())
+    private val initialAppliances = listOf(
+        ApplianceDrainItem(
+            id = "climate_control",
+            name = "Climate Control System",
+            zoneDescription = "HVAC Zone 01 & 02",
+            powerKw = 1.19,
+            percentage = 42,
+            accent = ApplianceAccent.CYAN,
+            ecoTip = "Eco Tip: Shifting +1°C saves 0.18 kW/hr",
+            isEcoTipApplied = false
+        ),
+        ApplianceDrainItem(
+            id = "water_heater",
+            name = "Quantum Water Heater",
+            zoneDescription = "Thermal storage: 91%",
+            powerKw = 0.68,
+            percentage = 24,
+            accent = ApplianceAccent.PURPLE,
+            ecoTip = null,
+            isEcoTipApplied = false
+        ),
+        ApplianceDrainItem(
+            id = "ambient_lighting",
+            name = "Cyber Ambient Lighting",
+            zoneDescription = "Circadian sequence enabled",
+            powerKw = 0.51,
+            percentage = 18,
+            accent = ApplianceAccent.CYAN_DIM,
+            ecoTip = null,
+            isEcoTipApplied = false
+        ),
+        ApplianceDrainItem(
+            id = "studio_workstations",
+            name = "Studio Workstations",
+            zoneDescription = "3 Units • Sleep ready",
+            powerKw = 0.46,
+            percentage = 16,
+            accent = ApplianceAccent.EMERALD,
+            ecoTip = null,
+            isEcoTipApplied = false
+        )
+    )
+
+    private val _uiState = MutableStateFlow(EnergyUiState(appliances = initialAppliances))
     val uiState: StateFlow<EnergyUiState> = _uiState.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            firestoreRepository.observeAppliances().collect { cloudAppliances ->
+                if (cloudAppliances.isNotEmpty()) {
+                    _uiState.update { it.copy(appliances = cloudAppliances) }
+                }
+            }
+        }
+    }
 
     fun onAction(action: EnergyUiAction) {
         when (action) {
@@ -55,6 +114,9 @@ class EnergyViewModel : ViewModel() {
                         appliances = updatedAppliances,
                         userFeedback = "${targetAppliance?.name ?: "Appliance"} Eco-Offset applied"
                     )
+                }
+                viewModelScope.launch {
+                    firestoreRepository.updateApplianceEcoTip(action.applianceId, true)
                 }
             }
 
